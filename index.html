@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Make Mom Happy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap');
+
+        :root {
+            --pink-light: #fff5f7;
+            --pink-medium: #fce7f3;
+            --pink-dark: #ec4899;
+            --floral-accent: #fb7185;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--pink-light);
+            background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
+            background-size: 40px 40px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            overflow: hidden;
+            padding: 5px;
+            margin: 0;
+        }
+
+        .fullscreen-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border: 3px solid var(--pink-dark);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .title-text {
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 900;
+            color: var(--pink-dark);
+            text-shadow: 3px 3px 0px white;
+            line-height: 1;
+            margin: 10px 0;
+            font-size: 4.5rem;
+            text-transform: none;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border: 8px solid white;
+            border-radius: 2.5rem;
+            box-shadow: 0 15px 40px rgba(236, 72, 153, 0.2);
+            padding: 0.8rem 1.5rem;
+            width: 98vw;
+            height: 80vh; /* Fits within screen */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 80px repeat(5, 1fr);
+            gap: 10px;
+            align-items: center;
+            justify-items: center;
+            flex-grow: 1;
+            height: 100%;
+        }
+
+        .column-header {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 5px;
+        }
+
+        .row-header {
+            font-size: 4rem; /* Smaller than before but still clear */
+            font-weight: 700;
+            color: var(--pink-dark);
+            text-align: center;
+            text-shadow: 2px 2px 0px white;
+        }
+
+        .heart-cell {
+            width: 90%;
+            height: 90%;
+            max-height: 11vh; /* Smaller hearts to save space */
+            cursor: pointer;
+            perspective: 1000px;
+            transition: transform 0.2s;
+        }
+
+        .heart-cell:hover:not(.revealed) {
+            transform: scale(1.05);
+        }
+
+        .heart-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        .heart-cell.revealed .heart-inner {
+            transform: rotateY(180deg);
+        }
+
+        .heart-front, .heart-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1.5rem;
+            font-weight: bold;
+        }
+
+        .heart-front {
+            background: white;
+            border: 4px solid var(--pink-medium);
+        }
+
+        .heart-back {
+            transform: rotateY(180deg);
+            background: white;
+            border: 4px solid var(--floral-accent);
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .heart-svg {
+            width: 80%;
+            height: 80%;
+            fill: var(--pink-dark);
+        }
+
+        /* Rewards inside the grid are readable but not overwhelming */
+        .reward-300 { color: #db2777; font-size: 2.2rem; }
+        .reward-200 { color: #be185d; font-size: 1.8rem; }
+        .reward-100 { color: #9d174d; font-size: 1.5rem; }
+        .reward-miss { color: #6b7280; font-size: 1rem; line-height: 1; font-weight: 600; }
+
+        .btn-reset {
+            background: var(--pink-dark);
+            color: white;
+            padding: 0.4rem 2rem;
+            border-radius: 3rem;
+            font-weight: bold;
+            transition: all 0.2s;
+            box-shadow: 0 6px 0 #be185d;
+        }
+
+        .btn-reset:active {
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+
+        /* Maximized header elements */
+        .header-img {
+            height: 14vh; /* Even bigger pictures */
+            width: auto;
+            object-fit: contain;
+            margin-bottom: 2px;
+            border-radius: 10px;
+        }
+
+        .header-text {
+            font-size: 2.8rem; /* Much bigger words */
+            font-weight: 900;
+            /* Changed from uppercase to lowercase */
+            text-transform: lowercase; 
+            letter-spacing: 1px;
+            color: #be185d;
+            line-height: 1;
+        }
+
+        #reveal-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(15px);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 6rem;
+            border-radius: 5rem;
+            border: 20px solid var(--pink-dark);
+            text-align: center;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 95%;
+        }
+
+        /* Massive fonts in the pop-up for the back of the room */
+        .modal-reward-text {
+            font-size: 12rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .modal-subtext {
+            font-size: 5rem;
+            font-weight: 700;
+            margin-top: 2rem;
+            color: var(--floral-accent);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.3); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Toggle Fullscreen">
+        <svg width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+    </button>
+
+    <h1 class="title-text text-center">How to Make Mom Happy!</h1>
+
+    <div class="game-container">
+        <div class="grid-layout" id="game-grid">
+            <!-- Headers -->
+            <div></div>
+            <div class="column-header">
+                <img src="hug.png" alt="hug" class="header-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3233/3233483.png'">
+                <p class="header-text">hug</p>
+            </div>
+            <div class="column-header">
+                <img src="kiss.png" alt="kiss" class="header-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/3062/3062164.png'">
+                <p class="header-text">kiss</p>
+            </div>
+            <div class="column-header">
+                <img src="flower.png" alt="flower" class="header-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2951/2951167.png'">
+                <p class="header-text">flower</p>
+            </div>
+            <div class="column-header">
+                <img src="card.png" alt="card" class="header-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2619/2619018.png'">
+                <p class="header-text">card</p>
+            </div>
+            <div class="column-header">
+                <img src="gift.png" alt="gift" class="header-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1169/1169905.png'">
+                <p class="header-text">gift</p>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="initGame()" class="btn-reset mb-2 text-2xl">Reset Game</button>
+
+    <div id="reveal-modal" onclick="closeModal()">
+        <div class="modal-content" id="modal-body"></div>
+    </div>
+
+    <script>
+        const gridElement = document.getElementById('game-grid');
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        function initGame() {
+            const headers = Array.from(gridElement.children).slice(0, 6);
+            gridElement.innerHTML = '';
+            headers.forEach(h => gridElement.appendChild(h));
+
+            let rewards = [
+                '$300', 
+                '$200', '$200', '$200',
+                '$100', '$100', '$100', '$100', '$100'
+            ];
+            while (rewards.length < 25) {
+                rewards.push('Try again!');
+            }
+
+            for (let i = rewards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [rewards[i], rewards[j]] = [rewards[j], rewards[i]];
+            }
+
+            for (let row = 1; row <= 5; row++) {
+                const rowLabel = document.createElement('div');
+                rowLabel.className = 'row-header';
+                rowLabel.innerText = row;
+                gridElement.appendChild(rowLabel);
+
+                for (let col = 0; col < 5; col++) {
+                    const reward = rewards[(row - 1) * 5 + col];
+                    const cell = createHeartCell(reward);
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+
+        function createHeartCell(reward) {
+            const container = document.createElement('div');
+            container.className = 'heart-cell';
+            
+            const inner = document.createElement('div');
+            inner.className = 'heart-inner';
+
+            const front = document.createElement('div');
+            front.className = 'heart-front';
+            front.innerHTML = `
+                <svg class="heart-svg" viewBox="0 0 32 32">
+                    <path d="M16 28.5L14.1 26.8C7.3 20.6 2.8 16.5 2.8 11.5 2.8 7.4 6 4.2 10.1 4.2c2.3 0 4.5 1.1 5.9 2.8 1.4-1.7 3.6-2.8 5.9-2.8 4.1 0 7.3 3.2 7.3 7.3 0 5-4.5 9.1-11.3 15.3L16 28.5z"/>
+                </svg>
+            `;
+
+            const back = document.createElement('div');
+            back.className = 'heart-back';
+            
+            let rewardClass = '';
+            if (reward === '$300') rewardClass = 'reward-300';
+            else if (reward === '$200') rewardClass = 'reward-200';
+            else if (reward === '$100') rewardClass = 'reward-100';
+            else rewardClass = 'reward-miss';
+
+            back.innerHTML = `<span class="${rewardClass}">${reward}</span>`;
+
+            inner.appendChild(front);
+            inner.appendChild(back);
+            container.appendChild(inner);
+
+            container.onclick = () => {
+                if (!container.classList.contains('revealed')) {
+                    container.classList.add('revealed');
+                    showModal(reward);
+                }
+            };
+
+            return container;
+        }
+
+        function showModal(reward) {
+            const modal = document.getElementById('reveal-modal');
+            const body = document.getElementById('modal-body');
+            
+            let color = '#ec4899';
+            let message = '';
+            
+            if (reward.includes('$')) {
+                color = '#db2777';
+                message = '<div class="modal-subtext">Mom is so happy!</div>';
+            } else {
+                color = '#6b7280';
+                message = '<div class="modal-subtext" style="color: #6b7280">Try another heart!</div>';
+            }
+
+            body.innerHTML = `
+                <div class="modal-reward-text" style="color: ${color}">${reward}</div>
+                ${message}
+                <button class="mt-20 bg-pink-500 text-white px-20 py-8 rounded-full text-5xl font-bold hover:bg-pink-600 transition-colors">OK!</button>
+            `;
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('reveal-modal').style.display = 'none';
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
